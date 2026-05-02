@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Task Manager</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f4f4;
+            text-align: center;
+        }
+
+        .container {
+            background: white;
+            width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px gray;
+        }
+
+        input {
+            padding: 10px;
+            width: 70%;
+        }
+
+        button {
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        li {
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Smart Task Manager</h2>
+
+    <input id="taskInput" placeholder="Enter task">
+    <button onclick="addTask()">Add</button>
+    <button onclick="getSuggestion()">Suggest</button>
+
+    <h3>Tasks:</h3>
+    <ul id="taskList"></ul>
+
+    <h3 id="suggestion"></h3>
+</div>
+
+<script>
+async function addTask() {
+    let task = document.getElementById("taskInput").value;
+
+    await fetch("http://127.0.0.1:8000/add", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({title: task})
+    });
+
+    document.getElementById("taskInput").value = "";
+    loadTasks();
+}
+
+async function loadTasks() {
+    let res = await fetch("http://127.0.0.1:8000/tasks");
+    let data = await res.json();
+
+    let list = document.getElementById("taskList");
+    list.innerHTML = "";
+
+    data.forEach((t, index) => {
+        let li = document.createElement("li");
+
+        li.innerText = t.task + " (" + t.priority + ") ";
+
+        let btn = document.createElement("button");
+        btn.innerText = "Delete";
+        btn.onclick = () => deleteTask(index);
+
+        li.appendChild(btn);
+        list.appendChild(li);
+    });
+}
+
+async function deleteTask(index) {
+    await fetch(`http://127.0.0.1:8000/delete/${index}`, {
+        method: "DELETE"
+    });
+
+    loadTasks();
+}
+
+async function getSuggestion() {
+    let res = await fetch("http://127.0.0.1:8000/suggest");
+    let data = await res.json();
+
+    document.getElementById("suggestion").innerText = data.suggestion;
+}
+
+loadTasks();
+</script>
+
+</body>
+</html>
